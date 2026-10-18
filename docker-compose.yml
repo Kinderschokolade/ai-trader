@@ -1,0 +1,18 @@
+services:
+  # Research container: downloads, event studies, backtests.
+  #   docker compose run --rm aitrader <command>
+  aitrader:
+    build: .
+    image: aitrader:latest
+    environment:
+      - AITRADER_HOME=/app
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./results:/app/results
+
+  # Phase 2 (live paper trading) will add:
+  #   ib-gateway: IB Gateway in paper mode (e.g. the ghcr.io/gnzsnz/ib-gateway image)
+  #   scheduler:  runs `aitrader live run-daily` every day at noon (Europe/Berlin),
+  #               downloads new filings, builds today's signals and places paper orders.

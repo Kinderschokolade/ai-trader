@@ -1,0 +1,84 @@
+# Strategy: copy CLUSTER BUYS by company insiders (SEC Form 4).
+# Signal: at least `min_insiders` different insiders of the same company buy shares on
+# the open market within `window_days`. We act on the FILING date (when it became public).
+
+[strategy]
+name = "insider_cluster"
+type = "insider_cluster"
+status = "active"
+description = """
+At least two different insiders (directors/officers) buy shares of their own company
+on the open market within 14 days. Hold for a fixed number of trading days.
+"""
+allocation = 0.2   # share of the total paper account
+
+[signal]
+window_days = 14     # calendar days in which the insiders must buy
+min_insiders = 2
+cooldown_days = 90   # no repeated signal for the same company within this many calendar days
+
+[filters]
+document_types = ["4"]              # "4/A" amendments are skipped to avoid double counting
+roles = ["director", "officer"]     # also possible: "tenpercentowner", "other"
+min_price = 2.0                     # USD; skip penny stocks
+min_filing_value_usd = 10_000       # a single insider's filing must be at least this big to count
+max_report_delay_days = 30          # skip filings reported long after the trade
+exclude_10b5_1 = true               # skip pre-planned trades (flag exists since 2023)
+size_buckets = []                   # only trade these size buckets, e.g. ["micro", "small"]; empty = all
+trend_buckets = []                  # only trade these trend buckets; empty = all
+
+[sizing]
+mode = "percent_of_equity"   # "percent_of_equity" or "fixed_amount"
+value = 0.04                 # 4 % of the strategy's current value per new lead (fixed_amount: USD)
+max_positions = 0            # 0 = no limit beyond what cash allows
+allow_add_to_existing = false
+allow_partial = false        # if cash is short even after selling old positions: false = skip the lead
+rank_by = "total_value"      # order when several signals arrive on the same day
+
+[exit]
+holding_days = 126                    # trading days (~6 months); 0 = no time exit
+forced_exit = "oldest_first"          # when cash is short for a new lead, sell the oldest position early
+min_holding_days_before_forced_exit = 0
+sell_on_source_sell = false
+
+[features]
+size_metric = "market_cap"            # "market_cap" (SEC shares outstanding x price) or "dollar_volume"
+size_edges = [300_000_000, 2_000_000_000, 10_000_000_000]
+size_labels = ["micro", "small", "mid", "large"]
+trend_lookback_days = 63              # trading days before the filing
+trend_relative_to_benchmark = true    # measure the run-up relative to the benchmark
+trend_edges = [-0.15, 0.15]
+trend_labels = ["falling", "flat", "rallying"]
+
+[event_study]
+horizon_days = 504                    # trading days after entry (~2 years)
+bucket_by = ["size_bucket", "trend_bucket"]
+min_bucket_events = 30                # buckets with fewer events are drawn but flagged
+start = ""                            # empty = the first train window of [validation]
+end = ""
+
+# Parameter grid for `aitrader sweep` and `aitrader walkforward`.
+# Keys are dotted paths into this file; every combination becomes one variant.
+[sweep]
+"exit.holding_days" = [63, 126, 252]
+"sizing.value" = [0.03, 0.05]
+
+[llm]
+# Optional LLM filter applied to every signal before trading. Off by default.
+# In backtests the model already knows what happened before its training cutoff, so the
+# filter refuses to run on signals before `knowledge_cutoff` unless `allow_lookahead = true`.
+enabled = false
+model = "claude-haiku-5-5"
+max_tokens = 300
+knowledge_cutoff = "2026-06-30"
+allow_lookahead = false
+system_prompt = """
+You are a cautious equity analyst. You judge whether an insider buying signal is worth
+following. Answer only with JSON: {"decision": "buy" | "skip", "reason": "<one sentence>"}.
+"""
+user_prompt = """
+Insider cluster buy at {issuer_name} ({ticker}), filed {known_date}.
+Insiders: {insiders} ({roles}). Combined value: ${total_value:,.0f}.
+Company size bucket: {size_bucket}. Price trend before the buy: {trend_bucket} ({pre_return:.1%}).
+Should we follow this signal?
+"""

@@ -1,0 +1,22 @@
+# DRAFT (phase 2) - not implemented yet. Parameters agreed so far.
+# Strategy: mirror Berkshire Hathaway's 13F portfolio changes.
+
+[strategy]
+name = "buffett"
+type = "thirteen_f"
+status = "draft"
+description = "Copy new positions and adds of Berkshire Hathaway; sell when Berkshire sells."
+allocation = 0.2
+
+[source]
+managers = [{ name = "Berkshire Hathaway", cik = "1067983" }]
+# 13F filings appear ~45 days after quarter end; we act on the filing date.
+
+[sizing]
+mode = "percent_of_equity"
+value = 0.05
+
+[exit]
+holding_days = 0              # no time exit
+sell_on_source_sell = true    # sell when the manager reduces/exits the position
+forced_exit = "oldest_first"

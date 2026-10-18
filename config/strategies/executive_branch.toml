@@ -1,0 +1,24 @@
+# DRAFT (phase 2) - not implemented yet. Parameters agreed so far.
+# Strategy: copy disclosed trades of the President and the executive branch (OGE Form 278-T).
+# History is too short for a meaningful backtest: this strategy is judged in paper trading.
+
+[strategy]
+name = "executive_branch"
+type = "executive_branch"
+status = "draft"
+description = "Copy buys of the President, VP, cabinet and senior White House staff; sell when they sell."
+allocation = 0.2
+
+[source]
+provider = "disclosedcapitol"   # free API tier
+officials = "executive_branch"   # President, VP, cabinet, senior White House staff
+asset_types = ["stock"]          # ignore municipal bonds, funds, etc.
+
+[sizing]
+mode = "percent_of_equity"
+value = 0.04
+
+[exit]
+holding_days = 0
+sell_on_source_sell = true
+forced_exit = "oldest_first"

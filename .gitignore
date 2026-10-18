@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# local data and outputs
+data/*
+!data/.gitkeep
+results/*
+!results/.gitkeep
+
+# secrets
+.env
+build/
+dist/

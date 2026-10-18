@@ -1,0 +1,77 @@
+# Strategy: copy LARGE single insider buys (SEC Form 4).
+# Signal: one insider's filing contains open-market purchases worth at least `min_value_usd`.
+
+[strategy]
+name = "insider_large"
+type = "insider_large"
+status = "active"
+description = """
+A single director or officer buys at least $100k of their own company's shares on the open
+market. Hold for a fixed number of trading days.
+"""
+allocation = 0.2
+
+[signal]
+min_value_usd = 100_000
+cooldown_days = 90
+
+[filters]
+document_types = ["4"]
+roles = ["director", "officer"]
+min_price = 2.0
+min_filing_value_usd = 0
+max_report_delay_days = 30
+exclude_10b5_1 = true
+size_buckets = []
+trend_buckets = []
+
+[sizing]
+mode = "percent_of_equity"
+value = 0.04
+max_positions = 0
+allow_add_to_existing = false
+allow_partial = false        # if cash is short even after selling old positions: false = skip the lead
+rank_by = "total_value"
+
+[exit]
+holding_days = 126
+forced_exit = "oldest_first"
+min_holding_days_before_forced_exit = 0
+sell_on_source_sell = false
+
+[features]
+size_metric = "market_cap"
+size_edges = [300_000_000, 2_000_000_000, 10_000_000_000]
+size_labels = ["micro", "small", "mid", "large"]
+trend_lookback_days = 63
+trend_relative_to_benchmark = true
+trend_edges = [-0.15, 0.15]
+trend_labels = ["falling", "flat", "rallying"]
+
+[event_study]
+horizon_days = 504
+bucket_by = ["size_bucket", "trend_bucket"]
+min_bucket_events = 30
+start = ""
+end = ""
+
+[sweep]
+"exit.holding_days" = [63, 126, 252]
+"signal.min_value_usd" = [100_000, 250_000]
+
+[llm]
+enabled = false
+model = "claude-haiku-5-5"
+max_tokens = 300
+knowledge_cutoff = "2026-06-30"
+allow_lookahead = false
+system_prompt = """
+You are a cautious equity analyst. You judge whether an insider buying signal is worth
+following. Answer only with JSON: {"decision": "buy" | "skip", "reason": "<one sentence>"}.
+"""
+user_prompt = """
+Large insider buy at {issuer_name} ({ticker}), filed {known_date}.
+Insider: {insiders} ({roles}). Value: ${total_value:,.0f}.
+Company size bucket: {size_bucket}. Price trend before the buy: {trend_bucket} ({pre_return:.1%}).
+Should we follow this signal?
+"""

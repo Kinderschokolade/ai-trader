@@ -1,0 +1,31 @@
+# DRAFT (phase 2) - not implemented yet. Parameters agreed so far.
+# Strategy: mirror the 13F portfolio changes of 8 well-known investors.
+
+[strategy]
+name = "superinvestors"
+type = "thirteen_f"
+status = "draft"
+description = "Copy new positions and adds of 8 investors; sell when they sell."
+allocation = 0.2
+
+[source]
+# CIKs left empty are looked up on EDGAR when this strategy is implemented.
+managers = [
+  { name = "Michael Burry (Scion Asset Management)", cik = "" },
+  { name = "Bill Ackman (Pershing Square)", cik = "" },
+  { name = "Seth Klarman (Baupost Group)", cik = "" },
+  { name = "Li Lu (Himalaya Capital)", cik = "" },
+  { name = "David Tepper (Appaloosa)", cik = "" },
+  { name = "Mohnish Pabrai (Dalal Street / Pabrai Funds)", cik = "" },
+  { name = "Stanley Druckenmiller (Duquesne Family Office)", cik = "" },
+  { name = "David Einhorn (Greenlight Capital)", cik = "" },
+]
+
+[sizing]
+mode = "percent_of_equity"
+value = 0.04
+
+[exit]
+holding_days = 0
+sell_on_source_sell = true
+forced_exit = "oldest_first"

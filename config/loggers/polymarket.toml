@@ -1,0 +1,15 @@
+# DRAFT (phase 2) - not implemented yet. Log-only: never trades.
+# Flags possible insider bets on Polymarket and later checks whether they were right.
+
+[logger]
+name = "polymarket"
+status = "draft"
+categories = ["politics", "geopolitics", "military", "us-policy"]
+
+[flag]
+max_wallet_age_days = 7    # wallet created at most this long before the bet
+min_bet_usd = 5_000
+max_price = 0.20           # long-shot: bought at odds below 20 %
+
+[schedule]
+poll_minutes = 5

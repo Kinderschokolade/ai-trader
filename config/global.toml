@@ -1,0 +1,60 @@
+# Global settings shared by every strategy.
+# Strategy-specific settings live in config/strategies/<name>.toml.
+# Paths are relative to the repo root (or $AITRADER_HOME).
+
+[paths]
+db = "data/aitrader.duckdb"
+raw_cache = "data/raw"   # downloaded SEC zip files
+results = "results"
+keep_raw = false          # delete SEC zip files after loading them into the database
+
+[sec]
+# The SEC blocks requests (HTTP 403) without a descriptive User-Agent that contains
+# a contact e-mail. Fill this in before downloading, e.g. "Marius ai-trader research name@example.org".
+user_agent = ""
+max_requests_per_second = 8   # SEC limit is 10
+
+[data]
+start = "2006-01-01"   # the SEC Form 4 data sets start in 2006 Q1
+end = ""               # empty = today
+price_source = "yahoo"
+
+[portfolio]
+initial_capital = 1_000_000   # total value of the paper account in USD
+benchmark = "SPY"             # used for abnormal returns and as the comparison line
+
+[execution]
+execution_price = "open"   # "open" or "close" of the trading day a trade happens
+entry_lag_days = 1         # trading days between the filing date and the entry (1 = next trading day)
+fractional_shares = true
+slippage_bps = 15          # price penalty per trade, in basis points (0.15 %)
+commission_per_share = 0.005   # IBKR "fixed" pricing for US stocks
+commission_min = 1.0
+commission_max_pct = 0.01
+min_trade_value = 100      # skip buys smaller than this (USD)
+
+[delisting]
+# A price series counts as "ended" if it stops this many trading days before the end of the data.
+stale_days = 10
+
+# Fraction of the last price that is lost when a held stock stops trading.
+# The classification comes from the company's SEC filings around its last trading day
+# (see `aitrader download delistings`).
+[delisting.haircut]
+bankruptcy = 1.0          # 8-K item 1.03 (bankruptcy)
+delisted_distress = 0.7   # 8-K item 3.01 (listing rule failure) without merger evidence
+deregistered = 0.5        # Form 15 / Form 25 without merger evidence
+acquired = 0.0            # merger proxy, tender offer, or completed acquisition
+still_filing = 0.0        # company still files reports: probably a ticker change / data gap
+unknown = 0.5             # no matching filings found
+unchecked = 0.5           # delisting check not run yet
+
+[validation]
+# Walk-forward validation: parameters are chosen on a train window and judged on the
+# following test window. Windows move forward by `step_years`.
+start = "2007-01-01"
+end = "2025-12-31"
+train_years = 8
+test_years = 5
+step_years = 2
+select_metric = "sharpe"   # sharpe | cagr | calmar | excess_cagr

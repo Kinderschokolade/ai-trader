@@ -1,0 +1,32 @@
+[project]
+name = "aitrader"
+version = "0.1.0"
+description = "Research and paper-trading framework for copy-trading strategies (company insiders, 13F investors, officials)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "duckdb>=1.0",
+  "pandas>=2.0",
+  "numpy>=1.24",
+  "requests>=2.31",
+  "yfinance>=0.2.40",
+  "matplotlib>=3.7",
+  "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.40"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+aitrader = "aitrader.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
